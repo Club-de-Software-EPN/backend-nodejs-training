@@ -1,16 +1,14 @@
 {
-  "name": "nodejs-training",
+  "name": "nodejs-course",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "chalk": "^4.1.2",
     "express": "^4.17.1",
-    "nodemon": "^2.0.12"
+    "nodemon": "^2.0.13"
   }
 }
