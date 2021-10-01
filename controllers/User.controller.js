@@ -9,20 +9,47 @@ const console = new Console('USER-CONTROLLER');
 const userService = UserService.getInstance();
 const response = new Response();
 
-router.post('/', (req, res) => {
-    const { email, password } = req.body;
-    if (!email) {
-        return response.error(res, 'Email is required', 400);
-    }
-    if (!password) {
-        return response.error(res, 'Password is required', 400);
-    }
-    const isLoggedIn = userService.login(email, password);
-    if (!isLoggedIn) {
-        return response.error(res, 'Invalid email or password', 400);
-    }
-    console.success('User authenticated: ' + email);
-    return response.success(res, 'User Logged in', 200);
+// get all users
+router.get('/', (req, res) => {
+    const users = userService.getAll();
+    console.success('GET ALL USERS');
+    response.success(res, users);
 });
+
+// get user by uuid
+router.get('/:uuid', (req, res) => {
+    const { uuid } = req.params;
+    const user = userService.getOne(uuid);
+    if (!user) {
+        console.error('USER NOT FOUND: ' + uuid);
+        response.error(res, 'USER NOT FOUND', 404);
+        return;
+    }
+    console.success('GET USER: ' + uuid);
+    response.success(res, user);
+    return;
+});
+
+// create user
+router.post('/', (req, res) => {
+    const { name, lastName, email, phone, organization } = req.body;
+    if (!name || !lastName || !email || !phone || !organization) {
+        console.error('MISSING PARAMETERS');
+        response.error(res, 'MISSING PARAMETERS', 400);
+        return;
+    }
+    const user = userService.create(name, lastName, email, phone, organization);
+    console.success('CREATE USER: ' + user.uuid);
+    response.success(res, user);
+});
+
+// update user
+router.put('/:uuid', (req, res) => {});
+
+// delete user
+router.delete('/:uuid', (req, res) => {});
+
+// get reservations by user
+router.get('/:uuid/reservations', (req, res) => {});
 
 module.exports = router;

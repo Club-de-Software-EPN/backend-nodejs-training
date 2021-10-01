@@ -1,24 +1,52 @@
+const { v4: uuidv4 } = require('uuid');
+
+const users = [
+    {
+        id: 1,
+        uuid: 'abcd-123',
+        name: 'John',
+        lastName: 'Doe',
+        email: 'example@exmple.com',
+        password: '123456',
+        phone: '123456789',
+        organization: 'Example',
+    }
+];
+
 class UserService {
-    static _userServiceIntance = null;
+    static _userServiceInstance = null;
 
     constructor() {}
 
     static getInstance() {
-        if (!UserService._userServiceIntance) {
-            UserService._userServiceIntance = new UserService();
+        if (!UserService._userServiceInstance) {
+            UserService._userServiceInstance = new UserService();
         }
-        return UserService._userServiceIntance;
+        return UserService._userServiceInstance;
     }
 
-    login (email, password) {
-        if (email !== 'admin@epn.edu.ec') {
-            return false;
-        }
-        if (password !== 'admin') {
-            return false;
-        }
-        return true;
+    getAll() {
+        return users;
     }
+
+    getOne(uuid) {
+        return users.find((user) => user.uuid === uuid);
+    }
+
+    create(name, lastName, email, phone, organization) {
+        const user = {
+            id: users.length + 1,
+            uuid: uuidv4(),
+            name,
+            lastName,
+            email,
+            phone,
+            organization
+        }
+        users.push(user);
+        return user;
+    }
+
 }
 
 module.exports = UserService;
