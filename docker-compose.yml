@@ -1,0 +1,13 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: admin@admin.com
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: my_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data

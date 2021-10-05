@@ -1,49 +1,46 @@
-const { v4: uuidv4 } = require('uuid');
-
-const users = [
-    {
-        id: 1,
-        uuid: 'abcd-123',
-        name: 'John',
-        lastName: 'Doe',
-        email: 'example@exmple.com',
-        password: '123456',
-        phone: '123456789',
-        organization: 'Example',
-    }
-];
+const bcrypt = require('bcrypt');
+const Database = require('../lib/Database');
 
 class UserService {
     static _userServiceInstance = null;
 
-    constructor() {}
+    async getModels() {
+        const { UserModel, AuthModel } = await Database.getModels();
+        this._userModel = UserModel;
+        this._authModel = AuthModel;
+    }
 
-    static getInstance() {
+    static async getInstance() {
         if (!UserService._userServiceInstance) {
             UserService._userServiceInstance = new UserService();
+            await UserService._userServiceInstance.getModels();
         }
         return UserService._userServiceInstance;
     }
 
-    getAll() {
-        return users;
+    async getAll() {
+        return this._userModel.findAll();
     }
 
-    getOne(uuid) {
-        return users.find((user) => user.uuid === uuid);
+    async getOne(uuid) {
+        return this._userModel.findOne({
+            where: { uuid }
+        });
     }
 
-    create(name, lastName, email, phone, organization) {
-        const user = {
-            id: users.length + 1,
-            uuid: uuidv4(),
+    async create(name, lastName, email, phone, organization, password) {
+        const user = await this._userModel.create({
+            email,
             name,
             lastName,
-            email,
             phone,
             organization
-        }
-        users.push(user);
+        });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const auth = await this._authModel.create({
+            password: hashedPassword
+        });
+        await user.setAuth(auth);
         return user;
     }
 

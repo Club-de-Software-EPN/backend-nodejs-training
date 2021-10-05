@@ -6,20 +6,21 @@ const Console = require('../lib/Console');
 const Response = require('../lib/Response');
 
 const console = new Console('USER-CONTROLLER');
-const userService = UserService.getInstance();
 const response = new Response();
 
 // get all users
-router.get('/', (req, res) => {
-    const users = userService.getAll();
+router.get('/', async (req, res) => {
+    const userService = await UserService.getInstance();
+    const users = await userService.getAll();
     console.success('GET ALL USERS');
     response.success(res, users);
 });
 
 // get user by uuid
-router.get('/:uuid', (req, res) => {
+router.get('/:uuid', async (req, res) => {
+    const userService = await UserService.getInstance();
     const { uuid } = req.params;
-    const user = userService.getOne(uuid);
+    const user = await userService.getOne(uuid);
     if (!user) {
         console.error('USER NOT FOUND: ' + uuid);
         response.error(res, 'USER NOT FOUND', 404);
@@ -31,15 +32,16 @@ router.get('/:uuid', (req, res) => {
 });
 
 // create user
-router.post('/', (req, res) => {
-    const { name, lastName, email, phone, organization } = req.body;
-    if (!name || !lastName || !email || !phone || !organization) {
+router.post('/', async (req, res) => {
+    const { name, lastName, email, phone, organization, password } = req.body;
+    if (!name || !lastName || !email || !phone || !organization || !password) {
         console.error('MISSING PARAMETERS');
         response.error(res, 'MISSING PARAMETERS', 400);
         return;
     }
-    const user = userService.create(name, lastName, email, phone, organization);
-    console.success('CREATE USER: ' + user.uuid);
+    const userService = await UserService.getInstance();
+    const user = await userService.create(name, lastName, email, phone, organization, password);
+    // console.success('CREATE USER: ' + user.uuid);
     response.success(res, user);
 });
 
