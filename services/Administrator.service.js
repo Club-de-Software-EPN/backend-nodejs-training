@@ -7,6 +7,16 @@ class AdministratorService {
         }
         return CourseService._administratorServiceInstance;
     }
+
+    async getAll() {}
+
+    async getOne() {}
+
+    async create() {}
+
+    async update() {}
+
+    async delete() {}
 }
 
 module.exports = AdministratorService;

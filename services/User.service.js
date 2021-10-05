@@ -44,6 +44,17 @@ class UserService {
         return user;
     }
 
+    async update() {
+        return null;
+    }
+
+    async delete() {
+        return null;
+    }
+
+    async getReservations(uuid) {
+        return null;
+    }
 }
 
 module.exports = UserService;

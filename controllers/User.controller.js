@@ -41,12 +41,30 @@ router.post('/', async (req, res) => {
     }
     const userService = await UserService.getInstance();
     const user = await userService.create(name, lastName, email, phone, organization, password);
-    // console.success('CREATE USER: ' + user.uuid);
+    console.success('CREATE USER: ' + user.uuid);
     response.success(res, user);
 });
 
 // update user
-router.put('/:uuid', (req, res) => {});
+router.put('/:uuid', async (req, res) => {
+    try {
+        const { uuid } = req.params;
+        if (!uuid) {
+            return response.error(res, 'Data missing', 400);
+        }
+        const userService = await UserService.getInstance();
+        const { email, name, lastName, phone, organization, password } = req.body;
+        await userService.update(uuid, email, name, lastName, phone, organization, password);
+        console.success('User updated: ' + uuid);
+        return response.success(res, 'User updated', 200);
+    } catch (error) {
+        console.error(error);
+        if (err instanceof SequelizeDatabaseError) {
+            response.error(res, err.message, 404);
+        }
+        return response.error(res, error.message, 500);
+    }
+});
 
 // delete user
 router.delete('/:uuid', (req, res) => {});
