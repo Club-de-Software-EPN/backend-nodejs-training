@@ -13,6 +13,7 @@ class ReservationService {
     static async getInstance() {
         if (ReservationService._reservationServiceInstance === null) {
             ReservationService._reservationServiceInstance = new ReservationService();
+            await ReservationService._reservationServiceInstance.getModels();
         }
         return ReservationService._reservationServiceInstance;
     }
