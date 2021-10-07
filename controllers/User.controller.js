@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const yup = require('yup');
 
 const UserService = require('../services/User.service');
 const Console = require('../lib/Console');
@@ -7,6 +8,30 @@ const Response = require('../lib/Response');
 
 const console = new Console('USER-CONTROLLER');
 const response = new Response();
+
+const createUserSchema = yup.object({
+    body: yup.object({
+        name: yup.string().required('Name is required'),
+        lastName: yup.string().required('Last Name is required'),
+        email: yup.string().email().required('Email is not correct'),
+        phone: yup.string().min(10).max(10).required('Phone format is not correct'),
+        organization: yup.string().required('Organization is required'),
+        password: yup.string().min(8).max(20).required('Password is not secure')
+    })
+});
+
+const validationMiddleware = (schema) =>  async (req, res, next) => {
+    try {
+        await schema.validate({
+            body: req.body
+        });
+        next();
+        return;
+    } catch(error) {
+        console.error(error);
+        response.error(res, error, 400);
+    }
+}
 
 // get all users
 router.get('/', async (req, res) => {
@@ -32,13 +57,8 @@ router.get('/:uuid', async (req, res) => {
 });
 
 // create user
-router.post('/', async (req, res) => {
+router.post('/', validationMiddleware(createUserSchema) ,async (req, res) => {
     const { name, lastName, email, phone, organization, password } = req.body;
-    if (!name || !lastName || !email || !phone || !organization || !password) {
-        console.error('MISSING PARAMETERS');
-        response.error(res, 'MISSING PARAMETERS', 400);
-        return;
-    }
     const userService = await UserService.getInstance();
     const user = await userService.create(name, lastName, email, phone, organization, password);
     console.success('CREATE USER: ' + user.uuid);
