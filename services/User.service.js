@@ -58,21 +58,32 @@ class UserService {
             returning: true
         } );
         const userAffected = user[1];
-        const hashedPassword = await bcrypt.hash(password, 10);
-        // console.log("Antes de actualizar");
-        // console.log(userAffected);
-        await this._authModel.update({
-            password: hashedPassword
-        },{
-            where:{
-                userId: userAffected[0].dataValues.id
-            }
-        });
+        if(password){
+            const hashedPassword = await bcrypt.hash(password, 10);
+            // console.log("Antes de actualizar");
+            // console.log(userAffected);
+            await this._authModel.update({
+                password: hashedPassword
+            },{
+                where:{
+                    userId: userAffected[0].dataValues.id
+                }
+            });
+        }
         return userAffected[0].dataValues;
     }
 
-    async delete() {
-        return null;
+    async delete(uuid) {
+        const user = await this._userModel.findOne({
+            where: {uuid},
+            include: [{
+                model: this._authModel
+            }]
+        });
+        const auth = await user.getAuth();
+        await user.destroy();
+        await auth.destroy();
+        return user;
     }
 
     async getReservations(uuid) {

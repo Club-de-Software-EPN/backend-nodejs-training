@@ -59,8 +59,8 @@ router.put('/:uuid', async (req, res) => {
         return response.success(res, userUpdated, 200);
     } catch (error) { 
         console.error(error);
-        if (err instanceof SequelizeDatabaseError) {
-            response.error(res, err.message, 404);
+        if (error instanceof SequelizeDatabaseError) {
+            response.error(res, error.message, 404);
         }
         return response.error(res, error.message, 500);
     }
@@ -69,14 +69,20 @@ router.put('/:uuid', async (req, res) => {
 // delete user
 router.delete('/:uuid', async (req, res) => {
     try{
-        const uuid = req.params;
+        const {uuid} = req.params;
         if(!uuid){
             return response.error(res,"Data Missing",400);
         }
         const userService = await UserService.getInstance();
-        await userService.delete(uuid);
+        const userDeleted = await userService.delete(uuid);
+        console.success("User deleted: " + uuid);
+        response.success(res, userDeleted);
     }catch(error){
-
+        console.error(error);
+        if (error instanceof SequelizeDatabaseError) {
+            response.error(res, error.message, 404);
+        }
+        return response.error(res, error.message, 500);
     }
 });
 
