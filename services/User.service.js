@@ -102,7 +102,7 @@ class UserService {
             }
         });
         if(userReservations.length === 0){
-            //if is an empty array
+            //if is an empty array-->the user doesn't have reservations
             return null;
         }
         return userReservations;
