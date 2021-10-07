@@ -38,7 +38,7 @@ class UserService {
             organization
         });
         const hashedPassword = await bcrypt.hash(password, 10);
-        const auth = await this._authModel.create({ 
+        const auth = await this._authModel.create({
             password: hashedPassword
         });
         await user.setAuth(auth);
@@ -46,37 +46,45 @@ class UserService {
     }
 
     async update(uuid, email, name, lastName, phone, organization, password) {
-        const user = await this._userModel.update({
+        if (!email && !name && !lastName && !phone && !organization && !password) {
+            throw new Error('Nothing to update');
+        }
+        if (password) {
+            const user = await this._userModel.findOne({
+                where: {
+                    uuid
+                },
+                include: [{
+                    model: this._authModel
+                }]
+            })
+            if (!user) {
+                throw new Error('uuid is not valid');
+            }
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const auth = await user.getAuth();
+            await this._authModel.update({
+                password: hashedPassword
+            }, {
+                where: {
+                    id: auth.id
+                }
+            });
+        }
+        const result =  await this._userModel.update({
             email,
             name,
             lastName,
             phone,
-            organization
-        },{
-            where: {
-                uuid
-            },
-            returning: true
-        } );
-        const userAffected = user[1];
-        if(password){
-            const hashedPassword = await bcrypt.hash(password, 10);
-            // console.log("Antes de actualizar");
-            // console.log(userAffected);
-            await this._authModel.update({
-                password: hashedPassword
-            },{
-                where:{
-                    userId: userAffected[0].dataValues.id
-                }
-            });
-        }
-        return userAffected[0].dataValues;
+            organization,
+        }, { where: { uuid }, returning: true });
+        const user = result[1];
+        return user[0];
     }
 
     async delete(uuid) {
         const user = await this._userModel.findOne({
-            where: {uuid},
+            where: { uuid },
             include: [{
                 model: this._authModel
             }]
@@ -93,7 +101,7 @@ class UserService {
                 uuid
             }
         });
-        if(!user){
+        if (!user) {
             throw new Error('uuid not found')
         }
         const userReservations = await this._reservationModel.findAll({
@@ -101,7 +109,7 @@ class UserService {
                 userId: user.id
             }
         });
-        if(userReservations.length === 0){
+        if (userReservations.length === 0) {
             //if is an empty array-->the user doesn't have reservations
             return null;
         }

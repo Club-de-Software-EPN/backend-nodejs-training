@@ -19,9 +19,6 @@ const updateUser = yup.object({
         phone: yup.string().min(10).max(10),
         organization: yup.string(),
         password: yup.string().min(8).max(20)
-    }),
-    params: yup.object({
-        uuid: yup.string().required('UUID is required')
     })
 });
 

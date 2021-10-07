@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { SequelizeDatabaseError } = require('sequelize');
 
 const UserService = require('../services/User.service');
 const { createUser, updateUser } = require('../dtos/User.dto');
@@ -13,7 +14,6 @@ const validationMiddleware = (schema) =>  async (req, res, next) => {
     try {
         await schema.validate({
             body: req.body,
-            params: req.params,
         });
         next();
         return;
@@ -67,19 +67,16 @@ router.post('/', validationMiddleware(createUser) ,async (req, res) => {
 router.put('/:uuid', validationMiddleware(updateUser) ,async (req, res) => {
     try {
         const { uuid } = req.params;
-        if (!uuid) {
-            return response.error(res, 'Data missing', 400);
-        }
         const userService = await UserService.getInstance();
         const { email, name, lastName, phone, organization, password } = req.body;
         const userUpdated = await userService.update(uuid, email, name, lastName, phone, organization, password);
         console.success('User updated: ' + uuid);
         return response.success(res, userUpdated, 200);
-    } catch (error) { 
+    } catch (error) {
         console.error(error);
-        if (error instanceof SequelizeDatabaseError) {
-            response.error(res, error.message, 404);
-        }
+        // if (error instanceof SequelizeDatabaseError) {
+        //     response.error(res, error.message, 404);
+        // }
         return response.error(res, error.message, 500);
     }
 });
