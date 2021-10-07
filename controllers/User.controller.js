@@ -1,29 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const yup = require('yup');
 
 const UserService = require('../services/User.service');
+const { createUser, updateUser } = require('../dtos/User.dto');
 const Console = require('../lib/Console');
 const Response = require('../lib/Response');
 
 const console = new Console('USER-CONTROLLER');
 const response = new Response();
 
-const createUserSchema = yup.object({
-    body: yup.object({
-        name: yup.string().required('Name is required'),
-        lastName: yup.string().required('Last Name is required'),
-        email: yup.string().email().required('Email is not correct'),
-        phone: yup.string().min(10).max(10).required('Phone format is not correct'),
-        organization: yup.string().required('Organization is required'),
-        password: yup.string().min(8).max(20).required('Password is not secure')
-    })
-});
-
 const validationMiddleware = (schema) =>  async (req, res, next) => {
     try {
         await schema.validate({
-            body: req.body
+            body: req.body,
+            params: req.params,
         });
         next();
         return;
@@ -57,7 +47,7 @@ router.get('/:uuid', async (req, res) => {
 });
 
 // create user
-router.post('/', validationMiddleware(createUserSchema) ,async (req, res) => {
+router.post('/', validationMiddleware(createUser) ,async (req, res) => {
     const { name, lastName, email, phone, organization, password } = req.body;
     const userService = await UserService.getInstance();
     const user = await userService.create(name, lastName, email, phone, organization, password);
@@ -66,7 +56,7 @@ router.post('/', validationMiddleware(createUserSchema) ,async (req, res) => {
 });
 
 // update user
-router.put('/:uuid', async (req, res) => {
+router.put('/:uuid', validationMiddleware(updateUser) ,async (req, res) => {
     try {
         const { uuid } = req.params;
         if (!uuid) {
