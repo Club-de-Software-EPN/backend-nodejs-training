@@ -87,6 +87,29 @@ router.delete('/:uuid', async (req, res) => {
 });
 
 // get reservations by user
-router.get('/:uuid/reservations', (req, res) => {});
+router.get('/:uuid/reservations', async (req, res) => {
+    try{
+        const {uuid} = req.params;
+        if(!uuid){
+            return response.error(res, "Data missing",400);
+        }
+        const userSevice = await UserService.getInstance();
+        const userReservations = await userSevice.getReservations(uuid);
+        if(userReservations===null){
+            console.success("User has no reservations");
+            response.success(res, 'User has no reservations');
+            return;
+        }
+        console.success("Reservations of: " +  uuid);
+        response.success(res, userReservations);
+    }catch(error){
+        console.log(error);
+        if (error instanceof SequelizeDatabaseError) {
+            response.error(res, error.message, 404);
+        }
+        return response.error(res, error.message, 500);
+    }
+
+});
 
 module.exports = router;

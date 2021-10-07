@@ -5,9 +5,10 @@ class UserService {
     static _userServiceInstance = null;
 
     async getModels() {
-        const { UserModel, AuthModel } = await Database.getModels();
+        const { UserModel, AuthModel, ReservationModel } = await Database.getModels();
         this._userModel = UserModel;
         this._authModel = AuthModel;
+        this._reservationModel = ReservationModel;
     }
 
     static async getInstance() {
@@ -87,7 +88,24 @@ class UserService {
     }
 
     async getReservations(uuid) {
-        return null;
+        const user = await this._userModel.findOne({
+            where: {
+                uuid
+            }
+        });
+        if(!user){
+            throw new Error('uuid not found')
+        }
+        const userReservations = await this._reservationModel.findAll({
+            where: {
+                userId: user.id
+            }
+        });
+        if(userReservations.length === 0){
+            //if is an empty array
+            return null;
+        }
+        return userReservations;
     }
 }
 
