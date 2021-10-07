@@ -5,9 +5,10 @@ class UserService {
     static _userServiceInstance = null;
 
     async getModels() {
-        const { UserModel, AuthModel } = await Database.getModels();
+        const { UserModel, AuthModel, ReservationModel } = await Database.getModels();
         this._userModel = UserModel;
         this._authModel = AuthModel;
+        this._reservationModel = ReservationModel;
     }
 
     static async getInstance() {
@@ -37,23 +38,74 @@ class UserService {
             organization
         });
         const hashedPassword = await bcrypt.hash(password, 10);
-        const auth = await this._authModel.create({
+        const auth = await this._authModel.create({ 
             password: hashedPassword
         });
         await user.setAuth(auth);
         return user;
     }
 
-    async update() {
-        return null;
+    async update(uuid, email, name, lastName, phone, organization, password) {
+        const user = await this._userModel.update({
+            email,
+            name,
+            lastName,
+            phone,
+            organization
+        },{
+            where: {
+                uuid
+            },
+            returning: true
+        } );
+        const userAffected = user[1];
+        if(password){
+            const hashedPassword = await bcrypt.hash(password, 10);
+            // console.log("Antes de actualizar");
+            // console.log(userAffected);
+            await this._authModel.update({
+                password: hashedPassword
+            },{
+                where:{
+                    userId: userAffected[0].dataValues.id
+                }
+            });
+        }
+        return userAffected[0].dataValues;
     }
 
-    async delete() {
-        return null;
+    async delete(uuid) {
+        const user = await this._userModel.findOne({
+            where: {uuid},
+            include: [{
+                model: this._authModel
+            }]
+        });
+        const auth = await user.getAuth();
+        await user.destroy();
+        await auth.destroy();
+        return user;
     }
 
     async getReservations(uuid) {
-        return null;
+        const user = await this._userModel.findOne({
+            where: {
+                uuid
+            }
+        });
+        if(!user){
+            throw new Error('uuid not found')
+        }
+        const userReservations = await this._reservationModel.findAll({
+            where: {
+                userId: user.id
+            }
+        });
+        if(userReservations.length === 0){
+            //if is an empty array-->the user doesn't have reservations
+            return null;
+        }
+        return userReservations;
     }
 }
 
