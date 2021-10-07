@@ -2,11 +2,26 @@ const express = require('express');
 const router = express.Router();
 
 const UserService = require('../services/User.service');
+const { createUser, updateUser } = require('../dtos/User.dto');
 const Console = require('../lib/Console');
 const Response = require('../lib/Response');
 
 const console = new Console('USER-CONTROLLER');
 const response = new Response();
+
+const validationMiddleware = (schema) =>  async (req, res, next) => {
+    try {
+        await schema.validate({
+            body: req.body,
+            params: req.params,
+        });
+        next();
+        return;
+    } catch(error) {
+        console.error(error);
+        response.error(res, error, 400);
+    }
+}
 
 // get all users
 router.get('/', async (req, res) => {
@@ -40,25 +55,16 @@ router.get('/:uuid', async (req, res) => {
 });
 
 // create user
-router.post('/', async (req, res) => {
-    try {
-        const { name, lastName, email, phone, organization, password } = req.body;
-        if (!name || !lastName || !email || !phone || !organization || !password) {
-            console.error('MISSING PARAMETERS');
-            response.error(res, 'MISSING PARAMETERS', 400);
-            return;
-        }
-        const userService = await UserService.getInstance();
-        const user = await userService.create(name, lastName, email, phone, organization, password);
-        console.success('CREATE USER: ' + user.uuid);
-        response.success(res, user);
-    } catch (error) {
-        console.error(error.message);
-    }
+router.post('/', validationMiddleware(createUser) ,async (req, res) => {
+    const { name, lastName, email, phone, organization, password } = req.body;
+    const userService = await UserService.getInstance();
+    const user = await userService.create(name, lastName, email, phone, organization, password);
+    console.success('CREATE USER: ' + user.uuid);
+    response.success(res, user);
 });
 
 // update user
-router.put('/:uuid', async (req, res) => {
+router.put('/:uuid', validationMiddleware(updateUser) ,async (req, res) => {
     try {
         const { uuid } = req.params;
         if (!uuid) {
