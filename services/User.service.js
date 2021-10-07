@@ -37,15 +37,38 @@ class UserService {
             organization
         });
         const hashedPassword = await bcrypt.hash(password, 10);
-        const auth = await this._authModel.create({
+        const auth = await this._authModel.create({ 
             password: hashedPassword
         });
         await user.setAuth(auth);
         return user;
     }
 
-    async update() {
-        return null;
+    async update(uuid, email, name, lastName, phone, organization, password) {
+        const user = await this._userModel.update({
+            email,
+            name,
+            lastName,
+            phone,
+            organization
+        },{
+            where: {
+                uuid
+            },
+            returning: true
+        } );
+        const userAffected = user[1];
+        const hashedPassword = await bcrypt.hash(password, 10);
+        // console.log("Antes de actualizar");
+        // console.log(userAffected);
+        await this._authModel.update({
+            password: hashedPassword
+        },{
+            where:{
+                userId: userAffected[0].dataValues.id
+            }
+        });
+        return userAffected[0].dataValues;
     }
 
     async delete() {
