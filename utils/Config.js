@@ -13,6 +13,7 @@ module.exports = {
     },
     api: {
         port: process.env.API_PORT,
+        secret: process.env.API_SECRET,
     }
 }
 

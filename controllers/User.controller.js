@@ -6,6 +6,7 @@ const UserService = require('../services/User.service');
 const { createUser, updateUser } = require('../dtos/User.dto');
 const Console = require('../lib/Console');
 const Response = require('../lib/Response');
+const { authMiddleware } = require('../middlewares/Auth');
 
 const console = new Console('USER-CONTROLLER');
 const response = new Response();
@@ -55,16 +56,21 @@ router.get('/:uuid', async (req, res) => {
 });
 
 // create user
-router.post('/', validationMiddleware(createUser) ,async (req, res) => {
-    const { name, lastName, email, phone, organization, password } = req.body;
-    const userService = await UserService.getInstance();
-    const user = await userService.create(name, lastName, email, phone, organization, password);
-    console.success('CREATE USER: ' + user.uuid);
-    response.success(res, user);
+router.post(
+    '/',
+    authMiddleware(response),
+    // validationMiddleware(createUser),
+    async (req, res) => {
+        console.success(req.user);
+        const { name, lastName, email, phone, organization, password } = req.body;
+        const userService = await UserService.getInstance();
+        const user = await userService.create(name, lastName, email, phone, organization, password);
+        console.success('CREATE USER: ' + user.uuid);
+        response.success(res, user);
 });
 
 // update user
-router.put('/:uuid', validationMiddleware(updateUser) ,async (req, res) => {
+router.put('/:uuid', validationMiddleware(updateUser), async (req, res) => {
     try {
         const { uuid } = req.params;
         const userService = await UserService.getInstance();

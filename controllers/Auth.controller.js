@@ -15,8 +15,9 @@ router.post('/user', async (req, res) => {
             return response.error(res, 'Email and password are required');
         }
         const authService = await AuthService.getInstance();
-        const isLoggedIn = await authService.userLogin(email, password);
-        response.success(res, isLoggedIn);
+        const token = await authService.userLogin(email, password);
+        res.cookie('token', token);
+        response.success(res, token);
     } catch(error) {
         console.error(error);
         response.error(res, error.message);
