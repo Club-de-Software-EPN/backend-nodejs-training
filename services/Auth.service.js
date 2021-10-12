@@ -1,5 +1,8 @@
 const Database = require('../lib/Database');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const { api } = require('../utils/Config');
 
 class AuthService {
     static _authServiceInstance = null;
@@ -19,6 +22,19 @@ class AuthService {
         return AuthService._authServiceInstance;
     }
 
+    verifyToken(token) {
+        return jwt.verify(token, api.secret);
+    }
+
+    generateToken(uuid) {
+        return jwt.sign(
+            {
+                uuid,
+            },
+            api.secret,
+        );
+    }
+
     async userLogin(email, password) {
         const user = await this._userModel.findOne({
             where: {
@@ -36,7 +52,8 @@ class AuthService {
         if (!isPasswordValid) {
             throw new Error('Credentials are not valid');
         }
-        return true;
+        const token = this.generateToken(user.uuid);
+        return token;
     }
 
     async adminLogin(email, password) {
