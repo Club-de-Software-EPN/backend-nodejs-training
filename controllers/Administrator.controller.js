@@ -2,6 +2,7 @@ const e = require('express');
 const express = require('express');
 const router = express.Router();
 
+const { createAdministrator, updateAdministrator} = require('../dtos/Administrator.dto');
 const Console = require('../lib/Console');
 const Response = require('../lib/Response');
 const AdministratorService = require('../services/Administrator.service');
@@ -9,22 +10,29 @@ const AdministratorService = require('../services/Administrator.service');
 const console = new Console('ADMIN-CONTROLLER');
 const response = new Response();
 
-//CREATE
-router.post('/', async (req, res) => {
+
+
+const validationMiddleware = (schema) =>  async (req, res, next) => {
     try {
-        const {name, lastName, email, password} = req.body;
-        if(!name || !lastName || !email || !password){
-            console.error('Missing data');
-            response.error(res, "Missing data");
-            return;
-        }
-        const administratorService = await AdministratorService.getInstance()
-        const administrator = await administratorService.create(name,lastName,email,password);
-        console.success("Administrador created: " + administrator.id);
-        response.success(res,administrator);
-    } catch (error) {
-        console.error(error.message);
+        await schema.validate({
+            body: req.body,
+        });
+        next();
+        return;
+    } catch(error) {
+        console.error(error);
+        response.error(res, error, 400);
     }
+}
+
+//CREATE
+router.post('/', validationMiddleware(createAdministrator), async (req, res) => {
+    const {name, lastName, email, password} = req.body;
+    const administratorService = await AdministratorService.getInstance()
+    const administrator = await administratorService.create(name,lastName,email,password);
+    console.success("Administrador created: " + administrator.id);
+    response.success(res,administrator);
+
 });
 
 //READ
@@ -61,21 +69,14 @@ router.get('/:id', async (req, res) => {
 
 //UPDATE
 router.put('/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        if(!id){
-            console.error("Missing data");
-            response.error(res,"Missing data",400);
-            return;
-        }
-        const administratorService = await AdministratorService.getInstance();
-        const {name, lastName, email, password} = req.body;
-        const administratorUpdated = await administratorService.update(id,name, lastName, email, password);
-        console.success("Administrator Updated: " + administratorUpdated.id);
-        response.success(res, administratorUpdated);
-    } catch (error) {
-        console.error(error.message);
-    }
+    
+    const id = req.params.id;
+    const {name, lastName, email, password} = req.body;
+    const administratorService = await AdministratorService.getInstance();
+    const administratorUpdated = await administratorService.update(id,name, lastName, email, password);
+    console.success("Administrator Updated: " + administratorUpdated.id);
+    response.success(res, administratorUpdated);
+    
 });
 
 //DELETE
