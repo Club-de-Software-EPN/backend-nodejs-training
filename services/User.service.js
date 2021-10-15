@@ -89,6 +89,9 @@ class UserService {
                 model: this._authModel
             }]
         });
+        if (!user) {
+            throw new Error('uuid not found')
+        }
         const auth = await user.getAuth();
         await user.destroy();
         await auth.destroy();

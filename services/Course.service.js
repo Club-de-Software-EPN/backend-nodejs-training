@@ -30,19 +30,23 @@ class CourseService {
         }); 
     }
 
-    async create(name, description, startDate, endDate, endInscriptionDate, themes, price) {
+    async create(email, password, name, description, startDate, endDate, endInscriptionDate, themes, price) {
         /** ¿Idenficar al administrador que crea el curso ?*/
         const course = await this._courseModel.create({
             name,
             slug: name.replaceAll(' ','-'),
             description,
-            startDate,
-            endDate,
-            endInscriptionDate,
+            startDate: new Date(startDate),
+            endDate: new Date(endDate),
+            endInscriptionDate: new Date(endDate),
             themes,
             price
         });
         //añadir el idAdmin a la fila del curso creado....
+        const admin = await this._administratorModel.findOne({ 
+            where: {email}
+        });
+        await course.setAdministrator();
         return course;
 
 

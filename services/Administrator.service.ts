@@ -1,8 +1,11 @@
-const Database = require('../lib/Database');
-const bcrypt = require('bcrypt');
+import Database from '../lib/Database';
+import bcrypt from 'bcrypt';
 
 class AdministratorService {
-    static _administratorServiceInstance = null;
+    static _administratorServiceInstance: AdministratorService;
+
+    _administratorModel: any;
+    _authModel: any;
 
     async getModels(){
         const {AdministratorModel, AuthModel} = await Database.getModels();
@@ -21,15 +24,15 @@ class AdministratorService {
         return this._administratorModel.findAll();
     }
 
-    async getOne(id) {
+    async getOne(id: string) {
         return this._administratorModel.findOne({
             where: {
-                id: parseInt(id)
+                id,
             }
         });
     }
 
-    async create(name, lastName, email, password) {
+    async create(name: string, lastName: string, email:string, password:string) {
         const administrator = await this._administratorModel.create({
             name,
             lastName,
@@ -43,11 +46,11 @@ class AdministratorService {
         return administrator;
     }
 
-    async update(id,name, lastName, email, password) {
+    async update(uuid?:string ,name?:string, lastName?: string, email?: string, password?: string) {
         if(password){
             const hashedPassword = await bcrypt.hash(password,10);
             const user = await this._administratorModel.findOne({
-                where: {id},
+                where: {uuid},
                 include: [{
                     model: this._authModel
                 }]
@@ -70,7 +73,7 @@ class AdministratorService {
         return administratorUpdated[1];
     }
 
-    async delete(id) {
+    async delete(id: string) {
         const administrator = await this._administratorModel.findOne({
             where: {id},
             include: [{
