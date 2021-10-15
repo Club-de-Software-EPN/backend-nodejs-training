@@ -5,7 +5,7 @@ import {
   OneToMany,
   ManyToOne,
 } from 'typeorm';
-import Administrator from './Administrator.enity';
+import Administrator from './Administrator.entity';
 import Reservation from './Reservation.entity';
 
 @Entity()

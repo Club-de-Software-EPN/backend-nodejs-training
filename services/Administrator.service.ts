@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import Database from '../lib/Database';
 
 class AdministratorService {
   private static administratorServiceInstance: AdministratorService;

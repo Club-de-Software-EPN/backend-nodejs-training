@@ -5,7 +5,7 @@ import {
   OneToOne,
 } from 'typeorm';
 
-import Administrator from './Administrator.enity';
+import Administrator from './Administrator.entity';
 import User from './User.entity';
 
 @Entity()
