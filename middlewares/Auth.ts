@@ -1,9 +1,14 @@
-import { NextFunction, Response as ExpressResponse, Request } from "express";
+/* eslint-disable import/prefer-default-export */
+import { NextFunction, Response as ExpressResponse, Request } from 'express';
 import Response from '../lib/Response';
 
 const AuthService = require('../services/Auth.service');
 
-export const authMiddleware = (response: Response) => async (req: Request, res: ExpressResponse, next: NextFunction) => {
+export const authMiddleware = (response: Response) => async (
+  req: Request,
+  res: ExpressResponse,
+  next: NextFunction,
+) => {
   try {
     const { authorization } = req.headers;
     if (!authorization) {
@@ -16,8 +21,8 @@ export const authMiddleware = (response: Response) => async (req: Request, res: 
       return response.error(res, 'Unathorized', 401);
     }
     req.body.user = payload;
-    next();
+    return next();
   } catch (e) {
-    response.error(res, (e as Error).message, 401);
+    return response.error(res, (e as Error).message, 401);
   }
 };

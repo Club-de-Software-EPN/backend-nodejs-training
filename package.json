@@ -6,7 +6,9 @@
   "scripts": {
     "start:dev": "nodemon server.ts",
     "start:prod": "node dist/server.js",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint ./*/**/*.ts --fix"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
@@ -18,14 +20,14 @@
     "nodemon": "^2.0.13",
     "pg": "^8.7.1",
     "sequelize": "^6.7.0",
+    "typeorm": "^0.2.38",
     "uuid": "^8.3.2",
-    "yarn": "^1.22.15",
     "yup": "^0.32.10"
   },
-  "repository": "https://github.com/Ariel-Marcelo/backend-nodejs-training.git",
-  "author": "Ariel Marcelo <55715664+Atari777@users.noreply.github.com>",
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
+    "@types/express": "^4.17.13",
+    "@types/jsonwebtoken": "^8.5.5",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^7.32.0",

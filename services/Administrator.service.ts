@@ -1,97 +1,94 @@
 import bcrypt from 'bcrypt';
-import Database from '../lib/Database';
+import { getRepository, Repository } from 'typeorm';
+import Administrator from '../entities/Administrator.entity';
+import Auth from '../entities/Auth.entity';
 
 class AdministratorService {
   private static administratorServiceInstance: AdministratorService;
 
-  private administratorModel: any;
+  private administratorRepository: Repository<Administrator>;
 
-  private authModel: any;
-
-  async getModels() {
-    const { AdministratorModel, AuthModel } = await Database.getModels();
-    this.administratorModel = AdministratorModel;
-    this.authModel = AuthModel;
-  }
+  private authRepository: Repository<Auth>;
 
   static async getInstance() {
     if (AdministratorService.administratorServiceInstance === null) {
       AdministratorService.administratorServiceInstance = new AdministratorService();
-      await AdministratorService.administratorServiceInstance.getModels();
+      AdministratorService.administratorServiceInstance.administratorRepository = getRepository(
+        Administrator,
+      );
+      AdministratorService.administratorServiceInstance.authRepository = getRepository(Auth);
     }
     return AdministratorService.administratorServiceInstance;
   }
 
-  async getAll() {
-    return this.administratorModel.findAll();
+  async getAll(): Promise<Administrator[]> {
+    return this.administratorRepository.find({
+      relations: ['auth', 'courses'],
+    });
   }
 
-  async getOne(id: string) {
-    return this.administratorModel.findOne({
+  async getOne(id: number): Promise<Administrator> {
+    const administrator = await this.administratorRepository.findOne({
       where: {
         id,
       },
+      relations: ['auth', 'courses'],
     });
-  }
-
-  async create(name: string, lastName: string, email: string, password: string) {
-    const administrator = await this.administratorModel.create({
-      name,
-      lastName,
-      email,
-    });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const auth = await this.authModel.create({
-      password: hashedPassword,
-    });
-    await administrator.setAuth(auth);
+    if (!administrator) {
+      throw new Error('Administrator not found');
+    }
     return administrator;
   }
 
+  async create(
+    name: string,
+    lastName: string,
+    email: string,
+    password: string,
+  ): Promise<Administrator> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const administrator = this.administratorRepository.create({
+      name,
+      lastName,
+      email,
+      auth: {
+        password: hashedPassword,
+      },
+    });
+    return this.administratorRepository.save(administrator);
+  }
+
   async update(
-    uuid: string,
+    id: number,
     name?: string,
     lastName?: string,
     email?: string,
     password?: string,
-  ) {
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await this.administratorModel.findOne({
-        where: { uuid },
-        include: [{
-          model: this.authModel,
-        }],
-      });
-      const auth = await user.getAuth();
-      await this.authModel.update({
-        password: hashedPassword,
-      }, {
-        where: { id: auth.id },
-      });
+  ): Promise<Administrator> {
+    if (!name && !lastName && !email && !password) {
+      throw new Error('No data to update');
     }
-    const administratorUpdated = await this.administratorModel.update({
-      name,
-      lastName,
-      email,
-    }, {
-      where: { uuid },
-      returning: true,
-    });
-    return administratorUpdated[1];
+
+    const administrator = await this.getOne(id);
+
+    if (!administrator) {
+      throw new Error('Administrator not found');
+    }
+
+    administrator.name = name || administrator.name;
+    administrator.lastName = lastName || administrator.lastName;
+    administrator.email = email || administrator.email;
+    administrator.auth.password = password || administrator.auth.password;
+
+    return this.administratorRepository.save(administrator);
   }
 
-  async delete(id: string) {
-    const administrator = await this.administratorModel.findOne({
-      where: { id },
-      include: [{
-        model: this.authModel,
-      }],
-    });
-    const auth = await administrator.getAuth();
-    await administrator.destroy();
-    await auth.destroy();
-    return administrator;
+  async delete(id: number): Promise<Administrator> {
+    const administrator = await this.getOne(id);
+    if (!administrator) {
+      throw new Error('Administrator not found');
+    }
+    return this.administratorRepository.remove(administrator);
   }
 }
 
