@@ -2,10 +2,11 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  JoinColumn,
   OneToOne,
+  JoinColumn,
   OneToMany,
 } from 'typeorm';
+
 import Auth from './Auth.entity';
 import Course from './Course.entity';
 
@@ -31,7 +32,7 @@ class Administrator {
   auth: Auth;
 
   @OneToMany(() => Course, (course) => course.administrator)
-  courses: Course[];
+  courses: Course[]
 }
 
 export default Administrator;

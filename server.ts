@@ -2,9 +2,7 @@ import express, { Express } from 'express';
 
 import Console from './lib/Console';
 import Router from './routes/Routes';
-
 import Database from './lib/Database';
-
 import env from './utils/Config';
 
 class Server {
@@ -25,7 +23,7 @@ class Server {
   }
 
   private setupRoutes(): void {
-    this.console.success('Setting up routes...');
+    this.console.success('Setting up routes ...');
     Router(this.server);
   }
 
@@ -35,15 +33,15 @@ class Server {
       this.applyMiddleware();
       this.setupRoutes();
       await this.dbConnection.createConnection();
+      this.console.success('Server initialized');
       this.server.listen(env.api.port, () => {
         this.console.success(`Server is running on port ${env.api.port}`);
       });
-    } catch (error) {
-      this.console.error((error as Error).message);
+    } catch (e) {
+      this.console.error((e as Error).message);
     }
   }
 }
 
 const server = new Server();
-
 server.init();

@@ -9,8 +9,8 @@ type EnvVariables = {
     port: number;
     secret: string;
   }
-
 }
+
 const env: EnvVariables = {
   db: {
     type: process.env.DB_DIALECT as 'postgres',

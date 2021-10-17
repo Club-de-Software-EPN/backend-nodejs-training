@@ -4,8 +4,8 @@ import {
   PrimaryGeneratedColumn,
   Generated,
   OneToOne,
-  JoinColumn,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 
 import Auth from './Auth.entity';
@@ -23,16 +23,16 @@ class User {
   @Column({ type: 'varchar', unique: true })
   email: string;
 
-  @Column({ type: 'varbit' })
+  @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'varbit' })
+  @Column({ type: 'varchar' })
   lastName: string;
 
-  @Column({ type: 'varbit' })
+  @Column({ type: 'varchar' })
   phone: string;
 
-  @Column({ type: 'varbit' })
+  @Column({ type: 'varchar' })
   organization: string;
 
   @OneToOne(() => Auth, (auth) => auth.user, {

@@ -1,6 +1,10 @@
 import {
-  Entity, Column, PrimaryGeneratedColumn, OneToOne,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToOne,
 } from 'typeorm';
+
 import Administrator from './Administrator.entity';
 import User from './User.entity';
 
@@ -13,13 +17,13 @@ class Auth {
   password: string;
 
   @Column({ type: 'boolean' })
-  isActieAccount: boolean;
+  isActiveAccount: boolean;
 
   @OneToOne(() => User, (user) => user.auth)
   user: User;
 
   @OneToOne(() => Administrator, (administrator) => administrator.auth)
-  administrator: Administrator;
+  adminstrator: User;
 }
 
 export default Auth;

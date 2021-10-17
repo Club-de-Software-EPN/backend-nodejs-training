@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { NextFunction, Response as ExpressResponse, Request } from 'express';
 import Response from '../lib/Response';
 

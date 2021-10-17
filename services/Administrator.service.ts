@@ -2,16 +2,22 @@
 import bcrypt from 'bcrypt';
 import { getRepository, Repository } from 'typeorm';
 import Administrator from '../entities/Administrator.entity';
+import Auth from '../entities/Auth.entity';
 
 class AdministratorService {
   private static administratorServiceInstance: AdministratorService;
 
   private administratorRepository: Repository<Administrator>;
 
+  private authRepository: Repository<Auth>;
+
   static async getInstance() {
     if (AdministratorService.administratorServiceInstance === null) {
       AdministratorService.administratorServiceInstance = new AdministratorService();
-      AdministratorService.administratorServiceInstance.administratorRepository = getRepository(Administrator);
+      AdministratorService.administratorServiceInstance.administratorRepository = getRepository(
+        Administrator,
+      );
+      AdministratorService.administratorServiceInstance.authRepository = getRepository(Auth);
     }
     return AdministratorService.administratorServiceInstance;
   }
@@ -35,21 +41,22 @@ class AdministratorService {
     return administrator;
   }
 
-  async create(name: string, lastName: string, email: string, password: string): Promise<Administrator> {
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const administrator = await this.administratorRepository.create({
-        name,
-        lastName,
-        email,
-        auth: {
-          password: hashedPassword,
-        },
-      });
-      return this.administratorRepository.save(administrator);
-    } catch (error) {
-      throw new Error((error as Error).message);
-    }
+  async create(
+    name: string,
+    lastName: string,
+    email: string,
+    password: string,
+  ): Promise<Administrator> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const administrator = this.administratorRepository.create({
+      name,
+      lastName,
+      email,
+      auth: {
+        password: hashedPassword,
+      },
+    });
+    return this.administratorRepository.save(administrator);
   }
 
   async update(
@@ -59,9 +66,10 @@ class AdministratorService {
     email?: string,
     password?: string,
   ): Promise<Administrator> {
-    if (!name && !!lastName && email && !password) {
+    if (!name && !lastName && !email && !password) {
       throw new Error('No data to update');
     }
+
     const administrator = await this.getOne(id);
 
     if (!administrator) {

@@ -41,7 +41,7 @@ class Course {
   reservations: Reservation[];
 
   @ManyToOne(() => Administrator, (administrator) => administrator.courses)
-  administrator: Administrator
+  administrator: Administrator;
 }
 
 export default Course;

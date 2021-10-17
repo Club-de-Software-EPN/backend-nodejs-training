@@ -14,7 +14,7 @@ class Database {
 
   async createConnection(): Promise<Connection> {
     try {
-      this.console.success('Connecting to database...');
+      this.console.success('Connecting to database ...');
       const connection = await createConnection({
         ...this.options,
         entities: [`${__dirname}/../entities/*.ts`],

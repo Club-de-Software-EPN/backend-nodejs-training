@@ -2,10 +2,12 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  Generated, ManyToOne,
+  Generated,
+  ManyToOne,
 } from 'typeorm';
-import Course from './Course.entity';
+
 import User from './User.entity';
+import Course from './Course.entity';
 
 @Entity()
 class Reservation {
@@ -14,7 +16,7 @@ class Reservation {
 
   @Column({ type: 'varchar' })
   @Generated('uuid')
-  uuid: string
+  uuid: string;
 
   @Column({ type: 'date' })
   expirationDate: Date;
@@ -23,18 +25,19 @@ class Reservation {
   totalPrice: number;
 
   @Column({ type: 'boolean' })
-  paymentStatus: boolean
+  paymenStatus: boolean;
 
   @Column({ type: 'varchar' })
-  paymentImageUrl: string
+  paymentImageUrl: string;
 
   @Column({ type: 'date' })
   paymentDate: Date;
 
   @ManyToOne(() => User, (user) => user.reservations)
-  user: User
+  user: User;
 
   @ManyToOne(() => Course, (course) => course.reservations)
-  course: Course
+  course: Course;
 }
+
 export default Reservation;
