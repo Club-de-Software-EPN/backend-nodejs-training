@@ -39,7 +39,7 @@ class User {
     nullable: true,
     cascade: true,
   })
-  @JoinColumn()
+  @JoinColumn() // USER HAS FK OF AUTH
   auth: Auth;
 
   @OneToMany(() => Reservation, (reservation) => reservation.user)

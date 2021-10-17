@@ -1,7 +1,7 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
+  Entity, // entity decorator
+  Column, // column decorator
+  PrimaryGeneratedColumn, // Primary Keys
   OneToOne,
   JoinColumn,
   OneToMany,
@@ -10,7 +10,7 @@ import {
 import Auth from './Auth.entity';
 import Course from './Course.entity';
 
-@Entity()
+@Entity() // use entity decorator (modify tsconfig.json)
 class Administrator {
   @PrimaryGeneratedColumn()
   id: number;

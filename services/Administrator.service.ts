@@ -74,7 +74,9 @@ class AdministratorService {
     if (!administrator) {
       throw new Error('Administrator not found');
     }
-
+    if (password) {
+      administrator.auth.password = await bcrypt.hash(password, 10);
+    }
     administrator.name = name || administrator.name;
     administrator.lastName = lastName || administrator.lastName;
     administrator.email = email || administrator.email;

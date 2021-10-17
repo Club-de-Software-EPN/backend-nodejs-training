@@ -19,7 +19,7 @@ class Auth {
   @Column({ type: 'boolean' })
   isActiveAccount: boolean;
 
-  @OneToOne(() => User, (user) => user.auth)
+  @OneToOne(() => User, (user) => user.auth) // return, column
   user: User;
 
   @OneToOne(() => Administrator, (administrator) => administrator.auth)

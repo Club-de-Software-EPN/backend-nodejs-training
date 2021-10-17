@@ -4,6 +4,7 @@ import { createAdministrator, updateAdministrator } from '../dtos/Administrator.
 import Console from '../lib/Console';
 import Response from '../lib/Response';
 import AdministratorService from '../services/Administrator.service';
+import { authMiddleware } from '../middlewares/Auth';
 
 const router = express.Router();
 
@@ -24,14 +25,14 @@ const validationMiddleware = (schema: any) => async (req: any, res: any, next: a
 };
 
 // CREATE
-router.post('/', validationMiddleware(createAdministrator), async (req, res) => {
+router.post('/', authMiddleware(response), validationMiddleware(createAdministrator), async (req, res) => {
   const {
     name, lastName, email, password,
   } = req.body;
   const administratorService = await AdministratorService.getInstance();
   const administrator = await administratorService.create(name, lastName, email, password);
   apiConsole.success(`Administrador created: ${administrator.id}`);
-  response.success(res, administrator);
+  response.success(res, JSON.stringify(administrator));
 });
 
 // READ
@@ -41,7 +42,7 @@ router.get('/', async (req, res) => {
     const administratorService = await AdministratorService.getInstance();
     const adminstrators = await administratorService.getAll();
     apiConsole.success('Get all administrators');
-    response.success(res, adminstrators);
+    response.success(res, adminstrators.toString());
   } catch (error) {
     apiConsole.error((error as Error)?.message);
     response.error(res, (error as Error)?.message, 400);
@@ -52,14 +53,14 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const administratorService = await AdministratorService.getInstance();
-    const administrator = await administratorService.getOne(id);
+    const administrator = await administratorService.getOne(+id);
     if (!administrator) {
       apiConsole.error('Administrator not found');
       response.error(res, 'Administrator not found', 400);
       return;
     }
     apiConsole.success(`Get administrator${id}`);
-    response.success(res, administrator);
+    response.success(res, JSON.stringify(administrator));
     return;
   } catch (error) {
     apiConsole.error((error as Error)?.message);
@@ -67,7 +68,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware(response), validationMiddleware(updateAdministrator), async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -75,14 +76,14 @@ router.put('/:id', async (req, res) => {
     } = req.body;
     const administratorService = await AdministratorService.getInstance();
     const administratorUpdated = await administratorService.update(
-      id,
+      +id,
       name,
       lastName,
       email,
       password,
     );
     apiConsole.success(`Administrator Updated: ${administratorUpdated.id}`);
-    response.success(res, administratorUpdated);
+    response.success(res, JSON.stringify(administratorUpdated));
   } catch (error) {
     apiConsole.error((error as Error)?.message);
     response.error(res, (error as Error)?.message, 400);
@@ -90,7 +91,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware(response), async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) {
@@ -99,9 +100,9 @@ router.delete('/:id', async (req, res) => {
       return;
     }
     const administratorService = await AdministratorService.getInstance();
-    const administratorDeleted = await administratorService.delete(id);
+    const administratorDeleted = await administratorService.delete(+id);
     apiConsole.success(`Admininstrator deleted${administratorDeleted.id}`);
-    response.success(res, administratorDeleted);
+    response.success(res, JSON.stringify(administratorDeleted));
   } catch (error) {
     apiConsole.error((error as Error)?.message);
     response.error(res, (error as Error)?.message, 400);
