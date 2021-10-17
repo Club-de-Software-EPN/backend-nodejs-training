@@ -1,29 +1,19 @@
+/* eslint-disable class-methods-use-this */
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import Database from '../lib/Database';
-
+import { getRepository, Repository } from 'typeorm';
+import Auth from '../entities/Auth.entity';
 import env from '../utils/Config';
 
 class AuthService {
   private static authServiceInstance: AuthService;
 
-  private userModel: any;
-
-  private authModel: any;
-
-  private administratorModel: any;
-
-  async getModels() {
-    const { UserModel, AuthModel, AdministratorModel } = await Database.getModels();
-    this.userModel = UserModel;
-    this.authModel = AuthModel;
-    this.administratorModel = AdministratorModel;
-  }
+  private authRepository: Repository<Auth>;
 
   static async getInstance() {
     if (AuthService.authServiceInstance === null) {
       AuthService.authServiceInstance = new AuthService();
-      await AuthService.authServiceInstance.getModels();
+      AuthService.authServiceInstance.authRepository = getRepository(Auth);
     }
     return AuthService.authServiceInstance;
   }
@@ -32,7 +22,7 @@ class AuthService {
     return jwt.verify(token, env.api.secret);
   }
 
-  generateToken(uuid: string) {
+  generateToken(uuid: string): string {
     return jwt.sign(
       {
         uuid,
@@ -42,28 +32,39 @@ class AuthService {
   }
 
   async userLogin(email: string, password: string) {
-    const user = await this.userModel.findOne({
+    const user = await this.authRepository.findOne({
       where: {
         email,
       },
-      include: [{
-        model: this.authModel,
-      }],
+      relations: ['user'],
     });
     if (!user) {
       throw new Error('Credentials are not valid');
     }
-    const auth = await user.getAuth();
-    const isPasswordValid = await bcrypt.compare(password, auth.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new Error('Credentials are not valid');
     }
-    const token = this.generateToken(user.uuid);
+    const token = this.generateToken(user.user.uuid);
     return token;
   }
 
   async adminLogin(email: string, password: string) {
-    return null;
+    const administrator = await this.authRepository.findOne({
+      where: {
+        email,
+      },
+      relations: ['administrator'],
+    });
+    if (!administrator) {
+      throw new Error('Credentials are not valid');
+    }
+    const isPasswordValid = await bcrypt.compare(password, administrator.password);
+    if (!isPasswordValid) {
+      throw new Error('Credentials are not valid');
+    }
+    const token = this.generateToken(`${administrator.administrator.id}`);
+    return token;
   }
 }
 

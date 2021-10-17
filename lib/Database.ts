@@ -1,58 +1,31 @@
-import { Sequelize } from 'sequelize';
+import { ConnectionOptions, Connection, createConnection } from 'typeorm';
 
-import env from '../utils/Config';
-import UserModel from '../models/User.model';
-import AuthModel from '../models/Auth.model';
-import AdministratorModel from '../models/Administrator.model';
-import CourseModel from '../models/Course.model';
-import ReservationModel from '../models/Reservation.model';
 import Console from './Console';
 
-const apiConsole = new Console('Database');
-
 class Database {
-    private static instance: Sequelize;
+  private options: ConnectionOptions;
 
-    static async getModels() {
-      apiConsole.success('Setting up database');
-      if (!Database.instance) {
-        Database.instance = new Sequelize({
-          dialect: env.db.dialect,
-          host: env.db.host,
-          port: env.db.port,
-          username: env.db.username,
-          password: env.db.password,
-          database: env.db.database,
-        });
+  private console: Console;
 
-        UserModel.setup(Database.instance);
-        AuthModel.setup(Database.instance);
-        AdministratorModel.setup(Database.instance);
-        CourseModel.setup(Database.instance);
-        ReservationModel.setup(Database.instance);
+  constructor(options: ConnectionOptions) {
+    this.options = options;
+    this.console = new Console('DB');
+  }
 
-        // Define relationships
-        UserModel.hasOne(AuthModel);
-        AdministratorModel.hasOne(AuthModel);
-
-        UserModel.hasMany(ReservationModel);
-        ReservationModel.belongsTo(UserModel);
-
-        CourseModel.hasMany(ReservationModel);
-        ReservationModel.belongsTo(CourseModel);
-
-        AdministratorModel.hasMany(CourseModel);
-
-        await Database.instance.sync();
-      }
-      return {
-        UserModel,
-        AuthModel,
-        AdministratorModel,
-        CourseModel,
-        ReservationModel,
-      };
+  async createConnection(): Promise<Connection> {
+    try {
+      this.console.success('Connecting to database...');
+      const connection = await createConnection({
+        ...this.options,
+        entities: [`${__dirname}/../entities/*.ts`],
+        synchronize: true,
+      });
+      this.console.success('Connected to database');
+      return connection;
+    } catch (e) {
+      this.console.error((e as Error).message);
+      throw new Error((e as Error).message);
     }
+  }
 }
-
 export default Database;

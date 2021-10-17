@@ -1,11 +1,19 @@
 import dotenv from 'dotenv';
-import { Dialect } from 'sequelize';
+import { ConnectionOptions } from 'typeorm';
 
 dotenv.config();
 
-export default {
+type EnvVariables = {
+  db: ConnectionOptions;
+  api: {
+    port: number;
+    secret: string;
+  }
+
+}
+const env: EnvVariables = {
   db: {
-    dialect: process.env.DB_DIALECT as Dialect,
+    type: process.env.DB_DIALECT as 'postgres',
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
     username: process.env.DB_USERNAME,
@@ -13,7 +21,9 @@ export default {
     database: process.env.DB_DATABASE,
   },
   api: {
-    port: process.env.API_PORT,
+    port: Number(process.env.API_PORT),
     secret: process.env.API_SECRET || '',
   },
 };
+
+export default env;
