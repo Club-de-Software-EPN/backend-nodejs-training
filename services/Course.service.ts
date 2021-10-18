@@ -1,42 +1,46 @@
-import Database from '../lib/Database';
+import Administrator from '../entities/Administrator.entity';
+import Reservation from '../entities/Reservation.entity';
 
 class CourseService {
   private static courseServiceInstance: CourseService;
 
-  private courseModel: any;
+  private courseRepository: Repository<Course>;
 
-  private administratorModel: any;
+  private administratorRepository: Repository<Administrator>;
 
-  private reservationModel: any;
-
-  async getModels() {
-    const { CourseModel, AdministratorModel, ReservationModel } = await Database.getModels();
-    this.courseModel = CourseModel;
-    this.administratorModel = AdministratorModel;
-    this.reservationModel = ReservationModel;
-  }
+  private reservationRepository: Repository<Reservation>;
 
   static async getInstance() {
-    if (CourseService.courseServiceInstance === null) {
+    if (CourseService.courseServiceInstance == null) {
       CourseService.courseServiceInstance = new CourseService();
-      await CourseService.courseServiceInstance.getModels();
+      CourseService.courseServiceInstance.courseRepository = getRepository(Course);
+      CourseService.courseServiceInstance.administratorRepository = getRepository(Administrator);
+      CourseService.courseServiceInstance.reservationRepository = getRepository(Reservation);
     }
     return CourseService.courseServiceInstance;
   }
 
-  async getAll() {
-    return this.courseModel.findAll();
-  }
-
-  async getOne(slug: string) {
-    return this.courseModel.findOne({
-      where: {
-        slug,
-      },
+  async getAll(): Promise<Course[]> {
+    return this.courseRepository.find({
+      relations: ['adminstrator', 'reservation'],
     });
   }
 
+  async getOne(slug: string): Promise<Course> {
+    const course = await this.courseRepository.findOne({
+      where: {
+        slug,
+      },
+      relations: ['administrator', 'reservation'],
+    });
+    if (!course) {
+      throw new Error('Course not found');
+    }
+    return course;
+  }
+
   async create(
+    id: number,
     name: string,
     description: string,
     startDate: Date,
@@ -44,31 +48,93 @@ class CourseService {
     endInscriptionDate: Date,
     themes: string[],
     price: number,
-  ) {
+  ): Promise<Course> {
     /** ¿Idenficar al administrador que crea el curso ? */
-    const course = await this.courseModel.create({
+    const course = this.courseRepository.create({
       name,
-      slug: name.split(' ').join('-'),
       description,
       startDate,
       endDate,
       endInscriptionDate,
       themes,
       price,
+      administrator: {
+        id,
+      },
     });
-    /**
-     * TODO: añadir el idAdmin a la fila del curso creado....
-     */
     return course;
   }
 
-  async update() { }
+  async update(
+    slug: string,
+    name: string,
+    description: string,
+    startDate: Date,
+    endDate: Date,
+    endInscriptionDate: Date,
+    themes: string[],
+    price: number,
+  ): Promise<Course> {
+    if (!name && !description && !startDate && !endDate
+      && !endInscriptionDate && !themes && !price) {
+      throw new Error('No data to update');
+    }
 
-  async delete() { }
+    const course = await this.getOne(slug);
 
-  async getAllReservations() { }
+    if (!course) {
+      throw new Error('Course not found');
+    }
+    course.name = name;
+    course.description = description;
+    course.startDate = startDate;
+    course.endDate = endDate;
+    course.endInscriptionDate = endInscriptionDate;
+    course.themes = themes;
+    course.price = price;
 
-  async addReservation() { }
+    return this.courseRepository.save(course);
+  }
+
+  async delete(slug: string): Promise<Course> {
+    const course = await this.getOne(slug);
+    if (!course) {
+      throw new Error('Course not found');
+    }
+    return this.courseRepository.remove(course);
+  }
+
+  async getAllReservations(): Promise<Reservation[]> {
+    return this.reservationRepository.find({
+      relations: ['user', 'course'],
+    });
+  }
+
+  async addReservation(
+    slug: string,
+    uuid: string,
+    expirationDate: string,
+    totalPrice: number,
+    paymenStatus: boolean,
+    paymentImageUrl: string,
+    paymentDate: Date,
+  ): Promise<Reservation> {
+    const reservation = this.reservationRepository.create({
+      uuid,
+      expirationDate,
+      totalPrice,
+      paymenStatus,
+      paymentImageUrl,
+      paymentDate,
+      course: {
+        slug,
+      },
+      user: {
+        uuid,
+      },
+    });
+    return this.reservationRepository.save(reservation);
+  }
 }
 
 export default CourseService;
