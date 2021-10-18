@@ -1,38 +1,40 @@
 import bcrypt from 'bcrypt';
 import Database from '../lib/Database';
 
+import { getRepository, Repository } from 'typeorm';
+import User from '../entities/User.entity';
+import Reservation from '../entities/Reservation.entity';
+
 class UserService {
   private static userServiceInstance: UserService;
 
-  private userModel: any;
+  private userRepository: Repository<User>;
 
-  private authModel: any;
-
-  private reservationModel: any;
-
-  async getModels() {
-    const { UserModel, AuthModel, ReservationModel } = await Database.getModels();
-    this.userModel = UserModel;
-    this.authModel = AuthModel;
-    this.reservationModel = ReservationModel;
-  }
+  private reservationRepository: Repository<Reservation>;
 
   static async getInstance() {
     if (!UserService.userServiceInstance) {
       UserService.userServiceInstance = new UserService();
-      await UserService.userServiceInstance.getModels();
+      UserService.userServiceInstance.userRepository = getRepository(User);
     }
     return UserService.userServiceInstance;
   }
 
-  async getAll() {
-    return this.userModel.findAll();
+  async getAll(): Promise<User[]> {
+    return this.userRepository.find({
+      relations: ['auth', 'reservations']
+    });
   }
 
-  async getOne(uuid: string) {
-    return this.userModel.findOne({
+  async getOne(uuid: string): Promise<User> {
+    const user = await this.userRepository.findOne({
       where: { uuid },
+      relations: ['auth', 'reservations']
     });
+    if (!user) {
+      throw new Error ('User not found');
+    }
+    return user;
   }
 
   async create(
@@ -43,19 +45,18 @@ class UserService {
     organization: string,
     password: string,
   ) {
-    const user = await this.userModel.create({
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = this.userRepository.create({
       email,
       name,
       lastName,
       phone,
       organization,
+      auth: {
+        password: hashedPassword,
+      }
     });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const auth = await this.authModel.create({
-      password: hashedPassword,
-    });
-    await user.setAuth(auth);
-    return user;
+    return this.userRepository.save(user);
   }
 
   async update(
@@ -70,62 +71,35 @@ class UserService {
     if (!email && !name && !lastName && !phone && !organization && !password) {
       throw new Error('Nothing to update');
     }
-    if (password) {
-      const user = await this.userModel.findOne({
-        where: {
-          uuid,
-        },
-        include: [{
-          model: this.authModel,
-        }],
-      });
-      if (!user) {
-        throw new Error('uuid is not valid');
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const auth = await user.getAuth();
-      await this.authModel.update({
-        password: hashedPassword,
-      }, {
-        where: {
-          id: auth.id,
-        },
-      });
+
+    const user = await this.getOne(uuid);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (!user) {
+      throw new Error ('User not found');
     }
-    const result = await this.userModel.update({
-      email,
-      name,
-      lastName,
-      phone,
-      organization,
-    }, { where: { uuid }, returning: true });
-    const user = result[1];
-    return user[0];
+
+    user.name = name || user.name;
+    user.lastName = lastName || user.lastName;
+    user.email = email || user.email;
+    user.phone = phone || user.phone;
+    user.organization = organization || user.organization;
+    user.auth.password = hashedPassword || user.auth.password;
+
+    return this.userRepository.save(user);
   }
 
   async delete(uuid: string) {
-    const user = await this.userModel.findOne({
-      where: { uuid },
-      include: [{
-        model: this.authModel,
-      }],
-    });
-    const auth = await user.getAuth();
-    await user.destroy();
-    await auth.destroy();
-    return user;
+    const user = await this.getOne(uuid);
+    if (!user) {
+      throw new Error ('User not found');
+    }
+    return this.userRepository.remove(user);
   }
 
   async getReservations(uuid: string) {
-    const user = await this.userModel.findOne({
-      where: {
-        uuid,
-      },
-    });
-    if (!user) {
-      throw new Error('uuid not found');
-    }
-    const userReservations = await this.reservationModel.findAll({
+    const user = await this.getOne(uuid);
+    const userReservations = await this.reservationRepository.find({
       where: {
         userId: user.id,
       },
