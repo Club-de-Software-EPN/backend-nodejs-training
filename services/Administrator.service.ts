@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import bcrypt from 'bcrypt';
 import { getRepository, Repository } from 'typeorm';
 import Administrator from '../entities/Administrator.entity';
@@ -74,12 +75,10 @@ class AdministratorService {
     if (!administrator) {
       throw new Error('Administrator not found');
     }
-
     administrator.name = name || administrator.name;
     administrator.lastName = lastName || administrator.lastName;
     administrator.email = email || administrator.email;
     administrator.auth.password = password || administrator.auth.password;
-
     return this.administratorRepository.save(administrator);
   }
 

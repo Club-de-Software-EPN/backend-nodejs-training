@@ -4,7 +4,7 @@ import Response from '../lib/Response';
 
 const AuthService = require('../services/Auth.service');
 
-export const authMiddleware = (response: Response) => async (
+const authMiddleware = (response: Response) => async (
   req: Request,
   res: ExpressResponse,
   next: NextFunction,
@@ -21,8 +21,12 @@ export const authMiddleware = (response: Response) => async (
       return response.error(res, 'Unathorized', 401);
     }
     req.body.user = payload;
-    return next();
+    next();
+    return null;
   } catch (e) {
-    return response.error(res, (e as Error).message, 401);
+    response.error(res, (e as Error).message, 401);
+    return null;
   }
 };
+
+export default authMiddleware;
