@@ -104,8 +104,11 @@ class CourseService {
     return this.courseRepository.remove(course);
   }
 
-  async getAllReservations(): Promise<Reservation[]> {
+  async getAllReservations(slug: string): Promise<Reservation[]> {
     return this.reservationRepository.find({
+      where: {
+        slug,
+      },
       relations: ['user', 'course'],
     });
   }
