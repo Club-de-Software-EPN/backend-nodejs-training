@@ -24,13 +24,13 @@ class Reservation {
   @Column({ type: 'decimal' })
   totalPrice: number;
 
-  @Column({ type: 'boolean' })
-  paymenStatus: boolean;
+  @Column({ type: 'boolean', default: false, nullable: true })
+  paymentStatus: boolean;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', default: null, nullable: true })
   paymentImageUrl: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', default: null, nullable: true })
   paymentDate: Date;
 
   @ManyToOne(() => User, (user) => user.reservations)

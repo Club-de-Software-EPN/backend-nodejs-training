@@ -1,20 +1,23 @@
-import Administrator from '../entities/Administrator.entity';
+import { getRepository, Repository } from 'typeorm';
+import { addDays } from 'date-fns';
+import Course from '../entities/Course.entity';
 import Reservation from '../entities/Reservation.entity';
+import User from '../entities/User.entity';
 
 class CourseService {
   private static courseServiceInstance: CourseService;
 
   private courseRepository: Repository<Course>;
 
-  private administratorRepository: Repository<Administrator>;
-
   private reservationRepository: Repository<Reservation>;
 
+  private userRepository: Repository<User>;
+
   static async getInstance() {
-    if (CourseService.courseServiceInstance == null) {
+    if (!CourseService.courseServiceInstance) {
       CourseService.courseServiceInstance = new CourseService();
       CourseService.courseServiceInstance.courseRepository = getRepository(Course);
-      CourseService.courseServiceInstance.administratorRepository = getRepository(Administrator);
+      CourseService.courseServiceInstance.userRepository = getRepository(User);
       CourseService.courseServiceInstance.reservationRepository = getRepository(Reservation);
     }
     return CourseService.courseServiceInstance;
@@ -22,7 +25,7 @@ class CourseService {
 
   async getAll(): Promise<Course[]> {
     return this.courseRepository.find({
-      relations: ['adminstrator', 'reservation'],
+      relations: ['administrator', 'reservations'],
     });
   }
 
@@ -31,7 +34,7 @@ class CourseService {
       where: {
         slug,
       },
-      relations: ['administrator', 'reservation'],
+      relations: ['administrator', 'reservations'],
     });
     if (!course) {
       throw new Error('Course not found');
@@ -49,9 +52,10 @@ class CourseService {
     themes: string[],
     price: number,
   ): Promise<Course> {
-    /** ¿Idenficar al administrador que crea el curso ? */
+    const slug = name.toLowerCase().replace(/ /g, '-');
     const course = this.courseRepository.create({
       name,
+      slug,
       description,
       startDate,
       endDate,
@@ -62,18 +66,18 @@ class CourseService {
         id,
       },
     });
-    return course;
+    return this.courseRepository.save(course);
   }
 
   async update(
     slug: string,
-    name: string,
-    description: string,
-    startDate: Date,
-    endDate: Date,
-    endInscriptionDate: Date,
-    themes: string[],
-    price: number,
+    name?: string,
+    description?: string,
+    startDate?: Date,
+    endDate?: Date,
+    endInscriptionDate?: Date,
+    themes?: string[],
+    price?: number,
   ): Promise<Course> {
     if (!name && !description && !startDate && !endDate
       && !endInscriptionDate && !themes && !price) {
@@ -85,13 +89,13 @@ class CourseService {
     if (!course) {
       throw new Error('Course not found');
     }
-    course.name = name;
-    course.description = description;
-    course.startDate = startDate;
-    course.endDate = endDate;
-    course.endInscriptionDate = endInscriptionDate;
-    course.themes = themes;
-    course.price = price;
+    course.name = name || course.name;
+    course.description = description || course.description;
+    course.startDate = startDate || course.startDate;
+    course.endDate = endDate || course.endDate;
+    course.endInscriptionDate = endInscriptionDate || course.endInscriptionDate;
+    course.themes = themes || course.themes;
+    course.price = price || course.price;
 
     return this.courseRepository.save(course);
   }
@@ -107,7 +111,9 @@ class CourseService {
   async getAllReservations(slug: string): Promise<Reservation[]> {
     return this.reservationRepository.find({
       where: {
-        slug,
+        course: {
+          slug,
+        },
       },
       relations: ['user', 'course'],
     });
@@ -116,27 +122,49 @@ class CourseService {
   async addReservation(
     slug: string,
     uuid: string,
-    expirationDate: string,
-    totalPrice: number,
-    paymenStatus: boolean,
-    paymentImageUrl: string,
-    paymentDate: Date,
   ): Promise<Reservation> {
-    const reservation = this.reservationRepository.create({
-      uuid,
-      expirationDate,
-      totalPrice,
-      paymenStatus,
-      paymentImageUrl,
-      paymentDate,
-      course: {
-        slug,
-      },
-      user: {
+    const user = await this.userRepository.findOne({
+      where: {
         uuid,
       },
+      relations: ['reservations'],
     });
-    return this.reservationRepository.save(reservation);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    const course = await this.courseRepository.findOne({
+      where: {
+        slug,
+      },
+      relations: ['reservations'],
+    });
+    if (!course) {
+      throw new Error('Course not found');
+    }
+    const reservationExists = user.reservations.filter(
+      (reservation) => course.reservations.filter((res) => res.id === reservation.id),
+    );
+
+    if (reservationExists.length > 0) {
+      throw new Error('Reservation already exists');
+    }
+
+    const expirationDate = addDays(new Date(), 7);
+    const reservation = this.reservationRepository.create({
+      expirationDate,
+      totalPrice: course.price,
+      course,
+      user,
+    });
+    const newReservation = await this.reservationRepository.save(reservation, {
+      transaction: true,
+    });
+    const foundReservation = await this.reservationRepository.findOne({
+      where: {
+        id: newReservation.id,
+      },
+    });
+    return foundReservation as Reservation;
   }
 }
 

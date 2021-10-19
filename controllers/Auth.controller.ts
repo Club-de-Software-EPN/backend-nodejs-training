@@ -3,14 +3,19 @@ import express from 'express';
 import Console from '../lib/Console';
 import Response from '../lib/Response';
 import AuthService from '../services/Auth.service';
-import authMiddleware from '../middlewares/Auth';
 
 const router = express.Router();
 
 const apiConsole = new Console('AUTH-CONTROLLER');
 const response = new Response();
 
-router.post('/user', authMiddleware(response), async (req, res) => {
+/**
+ * @api {POST}/auth/user Login user
+ * @apiName loginUser
+ * @apiGroup Auth
+ * @apiPermission any
+ */
+router.post('/user', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -26,7 +31,13 @@ router.post('/user', authMiddleware(response), async (req, res) => {
   }
 });
 
-router.post('/administrator', authMiddleware(response), async (req, res) => {
+/**
+ * @api {POST}/auth/user Login administrator
+ * @apiName loginUser
+ * @apiGroup Auth
+ * @apiPermission any
+ */
+router.post('/administrator', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {

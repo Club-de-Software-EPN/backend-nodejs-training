@@ -16,7 +16,7 @@ class Course {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', unique: true })
   slug: string;
 
   @Column({ type: 'text' })
@@ -37,7 +37,7 @@ class Course {
   @Column({ type: 'decimal' })
   price: number;
 
-  @OneToMany(() => Reservation, (reservation) => reservation.course)
+  @OneToMany(() => Reservation, (reservation) => reservation.course, { cascade: true })
   reservations: Reservation[];
 
   @ManyToOne(() => Administrator, (administrator) => administrator.courses)
