@@ -1,7 +1,14 @@
 version: '3.3'
 
 services:
-  postgres:
+  api:
+    build: .
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; yarn start:prod'
+    depends_on:
+      - db
+    expose:
+      - 3000
+  db:
     image: postgres:13
     environment:
       POSTGRES_USER: admin@admin.com
@@ -11,3 +18,13 @@ services:
       - "5432:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - db
+    ports:
+      - "80:80"

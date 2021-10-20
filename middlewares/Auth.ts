@@ -18,13 +18,13 @@ export const authMiddleware = (
   try {
     const { authorization } = req.headers;
     if (!authorization) {
-      return response.error(res, 'Unathorized', 401);
+      return response.error(res, 'Unauthorized', 401);
     }
     const token = authorization.split(' ')[1];
     const authService = await AuthService.getInstance();
     const payload = authService.verifyToken(token) as any;
     if (!payload) {
-      return response.error(res, 'Unathorized', 401);
+      return response.error(res, 'Unauthorized', 401);
     }
     if (role === 'administrator' && payload.role === 'administrator') {
       if (includeData) {
@@ -47,7 +47,7 @@ export const authMiddleware = (
     if (Array.isArray(role)) {
       const isAuthorized = role.includes(payload.role);
       if (!isAuthorized) {
-        return response.error(res, 'Unathorized', 401);
+        return response.error(res, 'Unauthorized', 401);
       }
       await Promise.all(role.map(async (r) => {
         if (r === payload.role) {
@@ -65,10 +65,10 @@ export const authMiddleware = (
       }));
       return next();
     }
-    return response.error(res, 'Unathorized', 401);
+    return response.error(res, 'Unauthorized', 401);
   } catch (e) {
     console.error(e);
-    response.error(res, 'Unathorized', 401);
+    response.error(res, 'Unauthorized', 401);
     return null;
   }
 };

@@ -12,19 +12,20 @@ class Database {
     this.console = new Console('DB');
   }
 
-  async createConnection(): Promise<Connection> {
+  async createConnection(): Promise<Connection | null> {
     try {
       this.console.success('Connecting to database ...');
       const connection = await createConnection({
         ...this.options,
-        entities: [`${__dirname}/../entities/*.ts`],
+        entities: [`${__dirname}/../entities/*.${process.env.NODE_ENV === 'production' ? 'js' : 'ts'}`],
         synchronize: true,
       });
       this.console.success('Connected to database');
       return connection;
     } catch (e) {
       this.console.error((e as Error).message);
-      throw new Error((e as Error).message);
+      setTimeout(() => this.createConnection(), 5000);
+      return null;
     }
   }
 }
