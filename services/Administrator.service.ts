@@ -1,22 +1,19 @@
+/* eslint-disable max-len */
 import bcrypt from 'bcrypt';
 import { getRepository, Repository } from 'typeorm';
 import Administrator from '../entities/Administrator.entity';
-import Auth from '../entities/Auth.entity';
 
 class AdministratorService {
   private static administratorServiceInstance: AdministratorService;
 
   private administratorRepository: Repository<Administrator>;
 
-  private authRepository: Repository<Auth>;
-
   static async getInstance() {
-    if (AdministratorService.administratorServiceInstance === null) {
+    if (!AdministratorService.administratorServiceInstance) {
       AdministratorService.administratorServiceInstance = new AdministratorService();
       AdministratorService.administratorServiceInstance.administratorRepository = getRepository(
         Administrator,
       );
-      AdministratorService.administratorServiceInstance.authRepository = getRepository(Auth);
     }
     return AdministratorService.administratorServiceInstance;
   }
@@ -74,14 +71,10 @@ class AdministratorService {
     if (!administrator) {
       throw new Error('Administrator not found');
     }
-    if (password) {
-      administrator.auth.password = await bcrypt.hash(password, 10);
-    }
     administrator.name = name || administrator.name;
     administrator.lastName = lastName || administrator.lastName;
     administrator.email = email || administrator.email;
     administrator.auth.password = password || administrator.auth.password;
-
     return this.administratorRepository.save(administrator);
   }
 

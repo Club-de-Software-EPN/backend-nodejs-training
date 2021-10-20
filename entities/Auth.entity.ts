@@ -16,14 +16,14 @@ class Auth {
   @Column({ type: 'varchar' })
   password: string;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   isActiveAccount: boolean;
 
-  @OneToOne(() => User, (user) => user.auth) // return, column
+  @OneToOne(() => User, (user) => user.auth)
   user: User;
 
   @OneToOne(() => Administrator, (administrator) => administrator.auth)
-  adminstrator: User;
+  administrator: User;
 }
 
 export default Auth;

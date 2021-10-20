@@ -16,7 +16,7 @@ class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'varchar' })
   @Generated('uuid')
   uuid: string;
 
@@ -39,10 +39,10 @@ class User {
     nullable: true,
     cascade: true,
   })
-  @JoinColumn() // USER HAS FK OF AUTH
+  @JoinColumn()
   auth: Auth;
 
-  @OneToMany(() => Reservation, (reservation) => reservation.user)
+  @OneToMany(() => Reservation, (reservation) => reservation.user, { cascade: true })
   reservations: Reservation[];
 }
 
