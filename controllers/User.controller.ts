@@ -182,5 +182,3 @@ router.delete('/:uuid',
   });
 
 export default router;
-
-// this is a comment
