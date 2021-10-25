@@ -19,7 +19,7 @@ class Server {
 
   private applyMiddleware(): void {
     this.console.success('Applying middleware...');
-    this.server.use(express.json());
+    this.server.use(express.json()); // this is for post and put, recognize a Json Object
   }
 
   private setupRoutes(): void {
@@ -38,7 +38,7 @@ class Server {
         this.console.success(`Server is running on port ${env.api.port}`);
       });
     } catch (e) {
-      this.console.error((e as Error).message);
+      // this.console.error((e as Error).message);
     }
   }
 }
